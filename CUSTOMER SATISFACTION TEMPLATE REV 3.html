@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal de Satisfacción del Cliente</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+  <header class="sticky top-0 bg-white shadow-md z-10 p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold"><i class="fas fa-smile text-blue-500"></i> Satisfacción del Cliente</h1>
+    <div id="clock" class="text-sm text-gray-600"></div>
+  </header>
+
+  <section class="p-6 text-center">
+    <h2 class="text-2xl font-semibold mb-2">¡Bienvenido a nuestro portal de evaluación!</h2>
+    <p class="text-gray-600">Tu opinión es muy importante para nosotros. Por favor, completa el formulario.</p>
+  </section>
+
+  <section class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+    <form id="contactForm" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="text" placeholder="🏢 Empresa" name="empresa" class="input" required />
+        <input type="text" placeholder="👤 Nombre" name="nombre" class="input" required />
+        <input type="email" placeholder="📧 Email" name="email" class="input" required />
+        <input type="tel" placeholder="📱 Celular" name="celular" class="input" required />
+        <input type="text" placeholder="🏙️ Ciudad" name="ciudad" class="input" />
+        <input type="text" placeholder="🌎 Estado" name="estado" class="input" />
+        <input type="text" placeholder="📮 Código Postal" name="codigo_postal" class="input" />
+        <input type="text" placeholder="🛠️ Producto utilizado" name="producto" class="input" />
+      </div>
+
+      <div class="mt-4">
+        <label for="comentarios" class="block text-sm font-medium text-gray-700 mb-1">📝 Comentarios o descripción del problema relacionado con el producto:</label>
+        <textarea name="comentarios" id="comentarios" rows="4" placeholder="Escribe aquí tu comentario..." class="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="text-lg font-semibold mb-2">📋 Mini Cuestionario:</h3>
+        <label class="block mb-1">⭐ ¿Cómo calificarías nuestro servicio?</label>
+        <select name="calificacion" class="input">
+          <option>Excelente</option>
+          <option>Bueno</option>
+          <option>Regular</option>
+          <option>Malo</option>
+        </select>
+        <label class="block mt-4 mb-1">🔁 ¿Volverías a comprar con nosotros?</label>
+        <div class="flex gap-4">
+          <label><input type="radio" name="volveria" value="si" required /> ✅ Sí</label>
+          <label><input type="radio" name="volveria" value="no" /> ❌ No</label>
+        </div>
+      </div>
+
+      <button type="submit" class="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+        <i class="fas fa-paper-plane"></i> Enviar Evaluación
+      </button>
+    </form>
+  </section>
+
+  <div id="rewardMsg" class="hidden text-center mt-6 p-4 bg-green-100 text-green-700 rounded-lg max-w-xl mx-auto">
+    🎁 ¡Gracias por tu evaluación! Un ejecutivo se pondrá en contacto contigo. Además, ¡has ganado una recompensa!
+  </div>
+
+  <section class="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-xl">
+    <h3 class="text-xl font-semibold mb-4">👷 Soporte Técnico en Acción</h3>
+    <img src="https://images.unsplash.com/photo-1618401471655-49b5b53e5bb5" alt="Ingeniero de servicio ofreciendo soporte" class="rounded-lg shadow-md w-full object-cover max-h-96" />
+  </section>
+
+  <script>
+    let calificaciones = JSON.parse(localStorage.getItem('calificaciones')) || {
+      Excelente: 0,
+      Bueno: 0,
+      Regular: 0,
+      Malo: 0
+    };
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const form = document.getElementById('contactForm');
+    const rewardMsg = document.getElementById('rewardMsg');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      if (!formData.get('email') || !formData.get('nombre')) {
+        alert('Por favor, completa todos los campos requeridos.');
+        return;
+      }
+
+      const cliente = Object.fromEntries(formData);
+      localStorage.setItem('cliente_' + Date.now(), JSON.stringify(cliente));
+
+      fetch("https://script.google.com/macros/s/AKfycbwUkosGMreG08W_-6zmA5Mwc5DW8ympY3_zmCyeXYlwKRHBmWbN7Ldj56YKWNN9Qe-o/exec", {
+        method: "POST",
+        body: JSON.stringify(cliente),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => res.json())
+      .then(data => console.log("✅ Datos enviados a Google Sheets:", data))
+      .catch(err => console.error("❌ Error al enviar a Google Sheets:", err));
+
+      const calif = cliente.calificacion;
+      if (calif) {
+        calificaciones[calif]++;
+        localStorage.setItem('calificaciones', JSON.stringify(calificaciones));
+      }
+
+      rewardMsg.classList.remove('hidden');
+      rewardMsg.classList.add('animate__animated', 'animate__fadeIn');
+      form.reset();
+    });
+
+    document.querySelectorAll('.input').forEach(input => {
+      input.classList.add('border', 'border-gray-300', 'p-2', 'rounded-lg', 'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400');
+    });
+  </script>
+</body>
+
+</html>
